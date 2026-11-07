@@ -18,9 +18,25 @@ docker run -d --name weather-dashboard -p 8080:8080 \
   ghcr.io/auhau/weather-dashboard:latest
 ```
 
-Then open `http://<host>:8080/`. To see the resolved entities and the computed data, open `/api/data`.
+Then open `http://<host>:8080/` for the HTML page, or point the display at `http://<host>:8080/image.png`. To see the resolved entities and the computed data, open `/api/data`.
 
 Create the token in Home Assistant under *Profile → Security → Long-lived access tokens*.
+
+## PNG for e-ink displays
+
+`GET /image.png` returns a 1200 × 825 8-bit grayscale PNG. A headless Chromium inside the container takes the screenshot. Every pixel is then snapped to evenly spaced gray levels with no dithering. With the default 8 levels these are exactly the design palette (`#000000`, `#242424` … `#FFFFFF`), so only anti-aliased edges change.
+
+Renders are cached for `PNG_CACHE_SECONDS`. A fresh render takes about 1–2 s; a cached one is instant.
+
+Query parameters override the env defaults for a single request:
+
+| Parameter | Env | Default | |
+|---|---|---|---|
+| `levels` | `PNG_GRAY_LEVELS` | `8` | gray levels: `8` = 3-bit, `16` = 4-bit, `4` = 2-bit, `2` = black/white, `256` = no quantization |
+| `rotate` | `PNG_ROTATE` | `0` | clockwise rotation: `0`, `90`, `180`, `270` (portrait-mounted panels) |
+| `invert` | `PNG_INVERT` | `false` | invert the image |
+
+Example: `/image.png?rotate=90&levels=2`.
 
 ## Configuration
 
@@ -49,6 +65,9 @@ Create the token in Home Assistant under *Profile → Security → Long-lived ac
 | `ALADIN_CACHE_MINUTES` | `30` | |
 | `OPEN_METEO_ENABLED` | `true` | Set `false` to use ALADIN only. The hourly strip then shows mm instead of % |
 | `OPEN_METEO_CACHE_MINUTES` | `60` | |
+| `PNG_GRAY_LEVELS` / `PNG_ROTATE` / `PNG_INVERT` | `8` / `0` / `false` | PNG defaults (see above) |
+| `PNG_CACHE_SECONDS` | `60` | How long a rendered PNG is reused |
+| `CHROMIUM_PATH` | `/usr/bin/chromium-browser` in the image | Chromium used for PNG rendering (outside Docker, a local Chrome is found automatically) |
 | `PORT` | `8080` | |
 
 Explicit `HA_*_ENTITY` variables override auto-discovery. Units are converted from each sensor's `unit_of_measurement` (°F, m/s, mph, inHg, in, …).

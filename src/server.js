@@ -9,6 +9,7 @@ import { getOpenMeteo } from './openmeteo.js';
 import { buildModel } from './model.js';
 import { renderPage } from './render.js';
 import { startOfLocalDay } from './format.js';
+import { renderPng, closeBrowser } from './png.js';
 
 const require = createRequire(import.meta.url);
 
@@ -117,6 +118,20 @@ const server = http.createServer(async (req, res) => {
       const { model, current, loc } = await collect();
       return send(res, 200, 'application/json; charset=utf-8', JSON.stringify({ location: loc, current, model }, null, 2));
     }
+    if (p === '/image.png') {
+      const q = url.searchParams;
+      const opts = {
+        levels: q.has('levels') ? Number(q.get('levels')) : config.png.levels,
+        rotate: q.has('rotate') ? Number(q.get('rotate')) : config.png.rotate,
+        invert: q.has('invert') ? ['1', 'true'].includes(q.get('invert')) : config.png.invert,
+      };
+      if (![0, 90, 180, 270].includes(opts.rotate)) return send(res, 400, 'text/plain', 'rotate must be 0, 90, 180 or 270');
+      if (!Number.isInteger(opts.levels) || opts.levels < 2 || opts.levels > 256) {
+        return send(res, 400, 'text/plain', 'levels must be an integer 2–256');
+      }
+      const png = await renderPng(`http://127.0.0.1:${config.port}/`, opts);
+      return send(res, 200, 'image/png', png, { 'Content-Length': png.length });
+    }
     if (p === '/healthz') return send(res, 200, 'text/plain', 'ok');
     if (p === '/fonts.css') {
       return send(res, 200, 'text/css; charset=utf-8', fontsCss, { 'Cache-Control': 'public, max-age=604800' });
@@ -142,4 +157,10 @@ server.listen(config.port, () => {
   if (!haConfigured()) console.warn('HA_URL / HA_TOKEN not set — current conditions will fall back to the ALADIN forecast');
 });
 
-for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => server.close(() => process.exit(0)));
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, async () => {
+    await closeBrowser();
+    server.close(() => process.exit(0));
+    server.closeAllConnections();
+  });
+}

@@ -8,8 +8,10 @@ FROM node:22-alpine
 ENV NODE_ENV=production \
     PORT=8080 \
     TZ=Europe/Prague
-# tzdata so TZ is honoured by the runtime
-RUN apk add --no-cache tzdata
+# tzdata so TZ is honoured; chromium renders /image.png (fonts: fallback glyphs only,
+# the page ships its own web fonts)
+RUN apk add --no-cache tzdata chromium font-dejavu
+ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./

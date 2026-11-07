@@ -63,6 +63,16 @@ export const config = {
     cacheMinutes: num('OPEN_METEO_CACHE_MINUTES', 60),
   },
 
+  // PNG endpoint (/image.png) for e-ink displays.
+  png: {
+    chromiumPath: str('CHROMIUM_PATH'),
+    // Gray levels to snap to: 8 = 3-bit, 16 = 4-bit, 4 = 2-bit, 2 = black/white, 256 = off.
+    levels: num('PNG_GRAY_LEVELS', 8),
+    rotate: num('PNG_ROTATE', 0), // clockwise degrees: 0, 90, 180, 270
+    invert: bool('PNG_INVERT', false),
+    cacheSeconds: num('PNG_CACHE_SECONDS', 60),
+  },
+
   // How often the page reloads itself in the browser (0 = never).
   refreshSeconds: num('REFRESH_SECONDS', 300),
   // How long Home Assistant states are cached on the server.

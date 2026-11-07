@@ -64,3 +64,22 @@ test('builds the view model and renders', () => {
   assert.match(html, /Jičín/);
   assert.match(html, /http-equiv="refresh" content="300"/);
 });
+
+test('e-ink PNG conversion quantizes and rotates', async () => {
+  const { PNG } = await import('pngjs');
+  const { toEink } = await import('../src/png.js');
+  const src = new PNG({ width: 3, height: 2 });
+  const grays = [0, 30, 100, 200, 250, 255];
+  grays.forEach((g, i) => src.data.set([g, g, g, 255], i * 4));
+  const out = PNG.sync.read(toEink(PNG.sync.write(src), { levels: 8, rotate: 90 }));
+  assert.equal(out.width, 2);
+  assert.equal(out.height, 3);
+  const vals = new Set();
+  for (let i = 0; i < out.data.length; i += 4) vals.add(out.data[i]);
+  for (const v of vals) assert.ok([0, 36, 73, 109, 146, 182, 219, 255].includes(v), `unexpected gray ${v}`);
+  // top-left of the rotated image is the bottom-left source pixel (200 → 182)
+  assert.equal(out.data[0], 182);
+  const bw = PNG.sync.read(toEink(PNG.sync.write(src), { levels: 2 }));
+  assert.equal(bw.data[4], 0); // 30 → black
+  assert.equal(bw.data[12], 255); // 200 → white
+});
