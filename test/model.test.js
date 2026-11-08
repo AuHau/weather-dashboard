@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parseAladin } from '../src/aladin.js';
-import { buildModel, classifyHour, classifyWmo, apparentTemp } from '../src/model.js';
+import { buildModel, classifyHour, classifyDay, classifyWmo, apparentTemp } from '../src/model.js';
 import { renderPage } from '../src/render.js';
 import { num, windDir, local } from '../src/format.js';
 
@@ -25,12 +25,27 @@ test('Czech formatting', () => {
   assert.equal(windDir(350), 'S');
 });
 
+test('rain intensity', () => {
+  const hour = (precip) => classifyHour({ clouds: 1, precip, snowFraction: 0 }, false);
+  assert.deepEqual(hour(0.2), { kind: 'rainLight', text: 'Slabý déšť' });
+  assert.deepEqual(hour(1), { kind: 'rain', text: 'Déšť' });
+  assert.deepEqual(hour(5), { kind: 'rainHeavy', text: 'Silný déšť' });
+  const day = (mm) => classifyDay([{ precip: mm, snowFraction: 0, clouds: 1, localHour: 12 }]);
+  assert.equal(day(1).kind, 'rainLight');
+  assert.equal(day(5).kind, 'rain');
+  assert.equal(day(15).kind, 'rainHeavy');
+});
+
 test('classification', () => {
   assert.equal(classifyHour({ clouds: 0.05, precip: 0, snowFraction: 0 }, false).text, 'Jasno');
   assert.equal(classifyHour({ clouds: 0.05, precip: 0, snowFraction: 0 }, true).kind, 'moon');
   assert.equal(classifyHour({ clouds: 0.5, precip: 0, snowFraction: 0 }, false).kind, 'partly');
   assert.equal(classifyHour({ clouds: 1, precip: 1, snowFraction: 0.9 }, false).kind, 'snow');
   assert.equal(classifyWmo(63).kind, 'rain');
+  assert.equal(classifyWmo(53).kind, 'drizzle');
+  assert.equal(classifyWmo(61).kind, 'rainLight');
+  assert.equal(classifyWmo(65).kind, 'rainHeavy');
+  assert.equal(classifyWmo(95).kind, 'thunder');
   assert.ok(Math.abs(apparentTemp(7.4, 82, 14) - 4.8) < 1.5);
 });
 
@@ -59,7 +74,7 @@ test('builds the view model and renders', () => {
   assert.equal(m.hasProb, false);
   assert.equal(m.days[0].source, 'ALADIN');
   assert.equal(m.days.length, 1); // only Sunday is fully covered by ALADIN without Open-Meteo
-  assert.ok(m.hours.some((h) => h.kind === 'rain' || h.kind === 'snow'));
+  assert.ok(m.hours.some((h) => /^(drizzle|rain|thunder|snow)/.test(h.kind)));
   const html = renderPage(m, { refreshSeconds: 300 });
   assert.match(html, /Jičín/);
   assert.match(html, /http-equiv="refresh" content="300"/);

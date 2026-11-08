@@ -7,8 +7,15 @@ const SMALL_SUN = '<circle cx="18" cy="17" r="6"></circle><path d="M18 4v3M5 17h
 const SMALL_MOON = '<path d="M16 5a10 10 0 1 0 12 13A8 8 0 0 1 16 5z"></path>';
 const PARTLY_CLOUD = (bg) => `<path d="M18 41h17a7 7 0 0 0 1-14 10 10 0 0 0-18.5-1.5A8 8 0 0 0 18 41z" fill="${bg}"></path>`;
 const CLOUD = '<path d="M14 36h20a8 8 0 0 0 1-16 11 11 0 0 0-20.5-1.5A9 9 0 0 0 14 36z"></path>';
-const RAIN = '<path d="M14 30h20a8 8 0 0 0 1-16 11 11 0 0 0-20.5-1.5A9 9 0 0 0 14 30z"></path><path d="M17 35l-2 6M25 35l-2 6M33 35l-2 6"></path>';
-const SNOW = '<path d="M14 30h20a8 8 0 0 0 1-16 11 11 0 0 0-20.5-1.5A9 9 0 0 0 14 30z"></path><path d="M16 36v0M24 39v0M32 36v0M20 44v0M28 44v0" stroke-width="4"></path>';
+// Cloud lifted to leave room for precipitation underneath.
+const HIGH_CLOUD = '<path d="M14 30h20a8 8 0 0 0 1-16 11 11 0 0 0-20.5-1.5A9 9 0 0 0 14 30z"></path>';
+// Rain intensity is shown by the number, length and density of the streaks.
+const DRIZZLE = HIGH_CLOUD + '<path d="M17 35l-1 3M25 35l-1 3M33 35l-1 3M21 41l-1 3M29 41l-1 3"></path>';
+const RAIN_LIGHT = HIGH_CLOUD + '<path d="M20 35l-2 6M30 35l-2 6"></path>';
+const RAIN = HIGH_CLOUD + '<path d="M17 35l-2 6M25 35l-2 6M33 35l-2 6"></path>';
+const RAIN_HEAVY = HIGH_CLOUD + '<path d="M15 34l-3 10M22 34l-3 10M29 34l-3 10M36 34l-3 10"></path>';
+const THUNDER = HIGH_CLOUD + '<path d="M26 32l-5 7h6l-4 7"></path><path d="M15 35l-2 6M36 35l-2 6"></path>';
+const SNOW = HIGH_CLOUD + '<path d="M16 36v0M24 39v0M32 36v0M20 44v0M28 44v0" stroke-width="4"></path>';
 
 const BODY = {
   sun: () => SUN,
@@ -16,7 +23,11 @@ const BODY = {
   partly: (bg) => SMALL_SUN + PARTLY_CLOUD(bg),
   partlyNight: (bg) => SMALL_MOON + PARTLY_CLOUD(bg),
   cloud: () => CLOUD,
+  drizzle: () => DRIZZLE,
+  rainLight: () => RAIN_LIGHT,
   rain: () => RAIN,
+  rainHeavy: () => RAIN_HEAVY,
+  thunder: () => THUNDER,
   snow: () => SNOW,
 };
 

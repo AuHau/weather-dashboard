@@ -4,12 +4,19 @@ import { local, longDate, shortDate, weekday, hhmm, deg, mm, num, windDir } from
 
 // ---------- conditions ----------
 
-/** Classify one hour of ALADIN data → { kind, text }. kind: sun|moon|partly|partlyNight|cloud|rain|snow */
+/** Rain amount (mm) → light / moderate / heavy, given the thresholds for the period. */
+function rainByIntensity(precip, moderateFrom, heavyFrom) {
+  if (precip >= heavyFrom) return { kind: 'rainHeavy', text: 'Silný déšť' };
+  if (precip >= moderateFrom) return { kind: 'rain', text: 'Déšť' };
+  return { kind: 'rainLight', text: 'Slabý déšť' };
+}
+
+/** Classify one hour of ALADIN data → { kind, text }. kind: sun|moon|partly|partlyNight|cloud|drizzle|rainLight|rain|rainHeavy|thunder|snow */
 export function classifyHour({ clouds, precip, snowFraction }, night) {
   if (precip >= 0.1) {
     if (snowFraction >= 0.8) return { kind: 'snow', text: precip < 0.5 ? 'Slabé sněžení' : 'Sněžení' };
     if (snowFraction >= 0.2) return { kind: 'snow', text: 'Déšť se sněhem' };
-    return { kind: 'rain', text: precip < 0.5 ? 'Slabý déšť' : 'Déšť' };
+    return rainByIntensity(precip, 0.5, 4);
   }
   const c = clouds ?? 0;
   if (c < 0.25) return { kind: night ? 'moon' : 'sun', text: c < 0.1 ? 'Jasno' : 'Skoro jasno' };
@@ -27,7 +34,7 @@ export function classifyDay(hours) {
     const light = precip < 2;
     if (sf >= 0.8) return { kind: 'snow', text: light ? 'Slabé sněžení' : 'Sněžení' };
     if (sf >= 0.2) return { kind: 'snow', text: 'Déšť se sněhem' };
-    return { kind: 'rain', text: light ? 'Slabý déšť' : 'Déšť' };
+    return rainByIntensity(precip, 2, 10);
   }
   const daytime = hours.filter((h) => h.localHour >= 8 && h.localHour <= 18);
   const pool = daytime.length ? daytime : hours;
@@ -42,13 +49,16 @@ export function classifyWmo(code) {
   if (code === 2) return { kind: 'partly', text: 'Polojasno' };
   if (code === 3) return { kind: 'cloud', text: 'Zataženo' };
   if (code === 45 || code === 48) return { kind: 'cloud', text: 'Mlha' };
-  if (code >= 51 && code <= 57) return { kind: 'rain', text: 'Mrholení' };
-  if (code === 61 || code === 80) return { kind: 'rain', text: 'Slabý déšť' };
-  if (code === 66 || code === 67) return { kind: 'rain', text: 'Mrznoucí déšť' };
-  if ([63, 65, 81, 82].includes(code)) return { kind: 'rain', text: 'Déšť' };
+  if (code >= 51 && code <= 55) return { kind: 'drizzle', text: 'Mrholení' };
+  if (code === 56 || code === 57) return { kind: 'drizzle', text: 'Mrznoucí mrholení' };
+  if (code === 61 || code === 80) return { kind: 'rainLight', text: 'Slabý déšť' };
+  if (code === 66) return { kind: 'rainLight', text: 'Mrznoucí déšť' };
+  if (code === 67) return { kind: 'rain', text: 'Mrznoucí déšť' };
+  if (code === 63 || code === 81) return { kind: 'rain', text: 'Déšť' };
+  if (code === 65 || code === 82) return { kind: 'rainHeavy', text: 'Silný déšť' };
   if ([71, 77, 85].includes(code)) return { kind: 'snow', text: 'Slabé sněžení' };
   if ([73, 75, 86].includes(code)) return { kind: 'snow', text: 'Sněžení' };
-  if (code >= 95) return { kind: 'rain', text: 'Bouřky' };
+  if (code >= 95) return { kind: 'thunder', text: 'Bouřky' };
   return { kind: 'cloud', text: 'Oblačno' };
 }
 
