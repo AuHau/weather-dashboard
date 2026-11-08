@@ -83,3 +83,18 @@ test('e-ink PNG conversion quantizes and rotates', async () => {
   assert.equal(bw.data[4], 0); // 30 → black
   assert.equal(bw.data[12], 255); // 200 → white
 });
+
+test('display battery in header', () => {
+  const base = {
+    now: new Date('2026-11-07T16:30:00Z'), timeZone: 'Europe/Prague', lat: 50.4372, lon: 15.3517, locationName: 'Jičín',
+    todayRange: null, aladin, openMeteo: null, hoursCount: 16, daysCount: 4, errors: [],
+  };
+  const ok = buildModel({ ...base, current: { temperature: 7, battery: 76.4, updatedAt: new Date() } });
+  assert.deepEqual(ok.battery, { pct: 76, low: false });
+  assert.match(renderPage(ok, { refreshSeconds: 0 }), /Baterie displeje 76 %/);
+  const low = buildModel({ ...base, current: { temperature: 7, battery: 9, updatedAt: new Date() } });
+  assert.equal(low.battery.low, true);
+  const none = buildModel({ ...base, current: { temperature: 7, battery: null, updatedAt: new Date() } });
+  assert.equal(none.battery, null);
+  assert.doesNotMatch(renderPage(none, { refreshSeconds: 0 }), /Baterie/);
+});

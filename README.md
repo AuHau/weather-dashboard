@@ -53,6 +53,7 @@ Example: `/image.png?rotate=90&levels=2`.
 | `HA_WIND_BEARING_ENTITY` | auto | Wind direction (degrees or compass) |
 | `HA_RAIN_TODAY_ENTITY` | auto | Daily rain total |
 | `HA_FEELS_LIKE_ENTITY` | auto | Feels-like temperature. If none is found, it is computed |
+| `HA_BATTERY_ENTITY` | – | Battery level (%) of the e-ink display, shown as an icon and percentage in the top-right corner (bold black at 15 % or less). Not part of the weather station; set it explicitly. Entities with a `battery_level` attribute also work |
 | `HA_USE_HISTORY` | `true` | Include today's observed min/max (from HA history) in today's Max/Min |
 | `HA_CACHE_SECONDS` | `60` | Cache for HA states |
 | `LATITUDE` / `LONGITUDE` | HA home | Forecast location |

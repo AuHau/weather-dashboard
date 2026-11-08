@@ -162,6 +162,18 @@ function bearingDeg(s) {
   return i >= 0 ? i * 22.5 : null;
 }
 
+// Display battery: a % sensor, or any entity with a `battery_level` attribute.
+function batteryLevel(byId, id) {
+  if (!id) return null;
+  const s = byId.get(id);
+  if (!s) {
+    console.warn(`[ha] battery entity ${id} not found`);
+    return null;
+  }
+  const v = toNumber(s) ?? parseFloat(s.attributes?.battery_level);
+  return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : null;
+}
+
 // ---------- public API ----------
 
 let haLocation = null;
@@ -215,6 +227,7 @@ export async function getCurrent() {
     windGust: speedKmh(get('windGust')),
     windBearing: bearingDeg(get('windBearing')),
     rainToday: precipMm(get('rainToday')),
+    battery: batteryLevel(byId, config.ha.batteryEntity),
     updatedAt: updated.length ? new Date(Math.max(...updated)) : new Date(),
   };
   cacheAt = Date.now();

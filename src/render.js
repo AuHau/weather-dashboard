@@ -1,7 +1,7 @@
 // Server-side HTML for the 1200×825 e-ink dashboard (3-bit grayscale palette).
 // No client-side JS: works on simple e-reader browsers and headless screenshotters.
 import { escapeHtml as e } from './format.js';
-import { weatherIcon, SUNRISE, SUNSET } from './icons.js';
+import { weatherIcon, batteryIcon, SUNRISE, SUNSET } from './icons.js';
 
 const BARLOW = "font-family: 'Barlow Semi Condensed', Inter, sans-serif";
 const LABEL = 'font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #B6B6B6';
@@ -9,6 +9,14 @@ const VALUE = `${BARLOW}; font-size: 30px; font-weight: 600; white-space: nowrap
 
 function stat(label, valueHtml) {
   return `<div style="display: flex; flex-direction: column; gap: 2px"><span style="${LABEL}">${label}</span><span style="${VALUE}">${valueHtml}</span></div>`;
+}
+
+function battery(b) {
+  if (!b) return '';
+  // Low battery is drawn black and bold so it stands out on the panel.
+  const color = b.low ? '#000000' : '#6D6D6D';
+  const weight = b.low ? 700 : 500;
+  return `<span style="display: flex; align-items: center; gap: 6px; margin-left: -12px; font-size: 16px; font-weight: ${weight}; color: ${color}" role="img" aria-label="Baterie displeje ${b.pct} %">${batteryIcon(b.pct, color)}${b.pct} %</span>`;
 }
 
 function header(m) {
@@ -24,7 +32,7 @@ function header(m) {
   <div style="display: flex; align-items: center; gap: 28px; font-size: 20px; font-weight: 600">
     <span style="display: flex; align-items: center; gap: 8px">${SUNRISE}${e(m.sunrise)}</span>
     <span style="display: flex; align-items: center; gap: 8px">${SUNSET}${e(m.sunset)}</span>
-    ${status}
+    ${status}${battery(m.battery)}
   </div>
 </header>`;
 }

@@ -25,5 +25,15 @@ export function weatherIcon(kind, size, strokeWidth, bg = '#FFFFFF') {
   return `<svg viewBox="0 0 48 48" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 }
 
+/** Horizontal battery outline whose fill follows `pct` (0–100). */
+export function batteryIcon(pct, color) {
+  const w = Math.round((Math.max(0, Math.min(100, pct)) / 100) * 22);
+  return `<svg viewBox="0 0 34 18" width="34" height="18" fill="none" aria-hidden="true">`
+    + `<rect x="1.5" y="1.5" width="28" height="15" rx="3" stroke="${color}" stroke-width="2.5"></rect>`
+    + `<rect x="31" y="6" width="2.5" height="6" rx="1" fill="${color}"></rect>`
+    + (w > 0 ? `<rect x="4.5" y="4.5" width="${w}" height="9" rx="1" fill="${color}"></rect>` : '')
+    + `</svg>`;
+}
+
 export const SUNRISE = '<svg viewBox="0 0 48 48" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" role="img" aria-label="Východ slunce"><path d="M8 36h32M14 36a10 10 0 0 1 20 0M24 10v8M18 14l6-6 6 6"></path></svg>';
 export const SUNSET = '<svg viewBox="0 0 48 48" width="28" height="28" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" role="img" aria-label="Západ slunce"><path d="M8 36h32M14 36a10 10 0 0 1 20 0M24 8v10M18 12l6 6 6-6"></path></svg>';

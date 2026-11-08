@@ -223,6 +223,9 @@ export function buildModel(p) {
     sunrise: isNaN(sunToday.sunrise) ? '–' : hhmm(sunToday.sunrise, tz),
     sunset: isNaN(sunToday.sunset) ? '–' : hhmm(sunToday.sunset, tz),
     updated: hhmm(p.current?.updatedAt || now, tz),
+    battery: Number.isFinite(p.current?.battery)
+      ? { pct: Math.round(p.current.battery), low: p.current.battery <= 15 }
+      : null,
     errors,
     current: {
       temp: deg(temp, 1),

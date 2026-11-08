@@ -40,6 +40,8 @@ export const config = {
       rainToday: str('HA_RAIN_TODAY_ENTITY'),
       feelsLike: str('HA_FEELS_LIKE_ENTITY'),
     },
+    // Battery level (%) of the e-ink display itself, shown in the header. Optional.
+    batteryEntity: str('HA_BATTERY_ENTITY'),
     // Use the temperature sensor history to get today's observed min/max.
     useHistory: bool('HA_USE_HISTORY', true),
   },
