@@ -34,7 +34,7 @@ export function classifyDay(hours) {
     const light = precip < 2;
     if (sf >= 0.8) return { kind: 'snow', text: light ? 'Slabé sněžení' : 'Sněžení' };
     if (sf >= 0.2) return { kind: 'snow', text: 'Déšť se sněhem' };
-    return rainByIntensity(precip, 2, 10);
+    return rainByIntensity(precip, DAY_RAIN_MODERATE, DAY_RAIN_HEAVY);
   }
   const daytime = hours.filter((h) => h.localHour >= 8 && h.localHour <= 18);
   const pool = daytime.length ? daytime : hours;
@@ -60,6 +60,25 @@ export function classifyWmo(code) {
   if ([73, 75, 86].includes(code)) return { kind: 'snow', text: 'Sněžení' };
   if (code >= 95) return { kind: 'thunder', text: 'Bouřky' };
   return { kind: 'cloud', text: 'Oblačno' };
+}
+
+// Daily rain totals (mm) that count as moderate / heavy; shared by both sources.
+const DAY_RAIN_MODERATE = 2;
+const DAY_RAIN_HEAVY = 10;
+// WMO codes for plain (non-freezing, non-convective) rain and rain showers.
+const RAIN_CODES = [61, 63, 65, 80, 81, 82];
+
+/**
+ * Classify an Open-Meteo day. The WMO code is the day's most severe *moment*
+ * (e.g. 80 = slight showers even with 6 mm in total), so for plain rain the
+ * intensity comes from the daily total, consistent with ALADIN days.
+ */
+export function classifyOpenMeteoDay({ code, precip }) {
+  const k = classifyWmo(code);
+  if (RAIN_CODES.includes(code) && Number.isFinite(precip)) {
+    return rainByIntensity(precip, DAY_RAIN_MODERATE, DAY_RAIN_HEAVY);
+  }
+  return k;
 }
 
 /** Apparent temperature (Australian BoM formula), wind in km/h. */
@@ -209,7 +228,7 @@ export function buildModel(p) {
         source: 'ALADIN',
       };
     } else if (om) {
-      d = { hi: om.hi, lo: om.lo, precip: om.precip, prob: om.prob, wind: om.wind, windDir: om.windDir, ...classifyWmo(om.code), source: 'Open-Meteo' };
+      d = { hi: om.hi, lo: om.lo, precip: om.precip, prob: om.prob, wind: om.wind, windDir: om.windDir, ...classifyOpenMeteoDay(om), source: 'Open-Meteo' };
     }
     if (!d) continue;
     days.push({

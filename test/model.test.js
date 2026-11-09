@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parseAladin } from '../src/aladin.js';
-import { buildModel, classifyHour, classifyDay, classifyWmo, apparentTemp } from '../src/model.js';
+import { buildModel, classifyHour, classifyDay, classifyWmo, classifyOpenMeteoDay, apparentTemp } from '../src/model.js';
 import { renderPage } from '../src/render.js';
 import { num, windDir, local } from '../src/format.js';
 
@@ -34,6 +34,20 @@ test('rain intensity', () => {
   assert.equal(day(1).kind, 'rainLight');
   assert.equal(day(5).kind, 'rain');
   assert.equal(day(15).kind, 'rainHeavy');
+});
+
+test('Open-Meteo day intensity follows the daily total, like ALADIN', () => {
+  // Slight showers (80) adding up to 6 mm must not read lighter than an ALADIN day with 5 mm.
+  assert.equal(classifyOpenMeteoDay({ code: 80, precip: 6 }).kind, 'rain');
+  assert.equal(classifyDay([{ precip: 5, snowFraction: 0, clouds: 1, localHour: 12 }]).kind, 'rain');
+  assert.equal(classifyOpenMeteoDay({ code: 65, precip: 1 }).kind, 'rainLight');
+  assert.equal(classifyOpenMeteoDay({ code: 61, precip: 12 }).kind, 'rainHeavy');
+  // Non-plain-rain codes keep their own kind.
+  assert.equal(classifyOpenMeteoDay({ code: 95, precip: 20 }).kind, 'thunder');
+  assert.equal(classifyOpenMeteoDay({ code: 53, precip: 1 }).kind, 'drizzle');
+  assert.equal(classifyOpenMeteoDay({ code: 73, precip: 5 }).kind, 'snow');
+  // Missing total falls back to the code.
+  assert.equal(classifyOpenMeteoDay({ code: 80, precip: null }).kind, 'rainLight');
 });
 
 test('classification', () => {
